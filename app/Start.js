@@ -4,20 +4,116 @@
  * @flow
  */
 
- import React, { Component } from 'react';
- import {
-   AppRegistry,
-   StyleSheet,
-   Text,
-   View,
-   Navigator,
-   TouchableHighlight,
-   Image,
-   ScrollView
- } from 'react-native';﻿
+import React, { Component } from 'react';
+import {
+  AppRegistry,
+  Image,
+  ListView,
+  Navigator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableHighlight,
+  View,
+} from 'react-native';﻿
+
+import Realm from 'realm';
+import ItemAusgabe from './ItemAusgabe'
+import Row from './OverviewRow';
 
 
 class Start extends Component {
+  constructor(){
+    super()
+
+    const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+
+    this.state = {
+      monthAmount: "",
+      monthNames: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+      currentMonth: "",
+      isLoading: false,
+      dataSource: ds.cloneWithRows([]),
+    }
+  }
+
+
+  componentWillMount(){
+    this.setState({"isLoading" : true});
+    console.log("------componentWillMount------")
+
+
+    // get cuurent year and month
+    var date = new Date();
+    var year = Number(date.getFullYear())
+    var month = Number(('0'+(date.getMonth()+1)).slice(-2))
+    var monthName = this.state.monthNames[month-1]
+    this.setState({currentMonth: monthName})
+
+
+
+    // query all ausgaben items for the current month
+    let realm = new Realm({schema: [ItemAusgabe]});
+    let r = realm.objects('ItemAusgabe').filtered('year <= $0 && month <= $1', year, month);
+    // build output string depending on results
+    var rlength = r.length
+    var newDs = [];
+    // no results
+    if (rlength == 0) {
+        this.state.monthAmount = '0.00 €'
+    } // there are results
+    else {
+      var amount = 0.00
+      for (var i = 0; i < rlength; i++) {
+          // sum up current month amount
+          amount = amount + r[i].amount
+          // verify if current category was seen before
+          var isin = false;
+          for (var j = 0; j < newDs.length; j++) {
+            if(r[i].category == newDs[j].category){
+              newDs[j].amount = newDs[j].amount + r[i].amount
+              isin = true;
+              break;
+            }
+          }
+          // there are no objects in array or category is not in arry
+          if (isin == false || newDs.length == 0){
+            var newData = {category:r[i].category, amount:r[i].amount, amount_string: ''};
+            newDs.push(newData)
+          }
+
+      }
+      // set current month amount string
+      this.state.monthAmount = parseFloat(amount).toFixed(2) + ' €'
+    }
+
+    // build amount string for listview
+    for (var j = 0; j < newDs.length; j++) {
+        newDs[j].amount_string = newDs[j].amount.toFixed(2) + ' €'
+      }
+
+    if(newDs.length > 0){
+      // sort array with objects depending on category amount
+      newDs.sort(function(a, b) {
+        // absteigend sortieren
+        return parseFloat(b.amount) - parseFloat(a.amount);
+      });
+      // set new datasource
+      this.setState({
+        dataSource: this.state.dataSource.cloneWithRows(newDs)
+      })
+    }
+
+
+    this.setState({"isLoading" : false});
+  }
+
+
+  componentDidMount(){
+    console.log("------componentDidMount------")
+  };
+
+
 
   onButtonAddPress(){
     this.props.navigator.push({
@@ -37,63 +133,67 @@ class Start extends Component {
     });
   }
 
+
+
   render(){
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>
-            Übersicht
+    if (this.state.isLoading == true){
+      return (
+        <View>
+          <Text>
+            loading data ...
           </Text>
-          <TouchableHighlight onPress={this.onButtonHistoryPress.bind(this)} style={styles.headerButton}>
-            <Image
-              style={styles.homeButton}
-              source={require('./history.png')}
-            />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={this.onButtonAddPress.bind(this)} style={styles.headerButton}>
-            <Image
-              style={styles.homeButton}
-              source={require('./add.png')}
-            />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={this.onButtonSettingsPress.bind(this)} style={styles.headerButton}>
-            <Image
-              style={styles.homeButton}
-              source={require('./settings.png')}
-            />
-          </TouchableHighlight>
         </View>
-        <View style={styles.content}>
-          <View style={styles.stats}>
-            <Text style={styles.dateText}>
-              November
+      )
+    }
+    else {
+      return (
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.headerText}>
+              Übersicht
             </Text>
-            <Text style={styles.betragText}>
-              796,23€
-            </Text>
+            <TouchableHighlight onPress={this.onButtonHistoryPress.bind(this)} style={styles.headerButton}>
+              <Image
+                style={styles.homeButton}
+                source={require('./history.png')}
+              />
+            </TouchableHighlight>
+            <TouchableHighlight onPress={this.onButtonAddPress.bind(this)} style={styles.headerButton}>
+              <Image
+                style={styles.homeButton}
+                source={require('./add.png')}
+              />
+            </TouchableHighlight>
+            <TouchableHighlight onPress={this.onButtonSettingsPress.bind(this)} style={styles.headerButton}>
+              <Image
+                style={styles.homeButton}
+                source={require('./settings.png')}
+              />
+            </TouchableHighlight>
           </View>
-          <View style={styles.liste}>
-            <ScrollView>
-              <Text style={styles.listenEintraege}>Miete 434,23€</Text>
-              <Text style={styles.listenEintraege}>Auto 123,23€</Text>
-              <Text style={styles.listenEintraege}>Essen 34,43€</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-              <Text style={styles.listenEintraege}>Liste</Text>
-            </ScrollView>
+          <View style={styles.content}>
+            <View style={styles.stats}>
+              <Text style={styles.dateText}>
+                {this.state.currentMonth}
+              </Text>
+              <Text style={styles.betragText}>
+                {this.state.monthAmount}
+              </Text>
+            </View>
+            <View style={styles.liste}>
+              <ListView
+                style={styles.listcontainer}
+                dataSource={this.state.dataSource}
+                renderRow={(data) => <Row {...data} />}
+                renderSeparator={(sectionId, rowId) => <View key={rowId} style={styles.separator} />}
+                enableEmptySections={true}
+              />
+            </View>
           </View>
         </View>
-      </View>
-    )
+      )
+    }
+
   }
 }
 
@@ -131,26 +231,10 @@ const styles = StyleSheet.create ({
     flex: 1,
     paddingLeft: 25
   },
-  largeText: {
-    flex: 1,
-    fontSize: 42,
-    paddingTop: 40,
-    paddingRight: 20,
-    paddingLeft: 20,
-    color: '#173e43'
-  },
   betragText: {
     flex: 2,
     fontSize: 40,
     paddingBottom: 20,
-    color: '#173e43'
-  },
-  smallText: {
-    flex: 1,
-    fontSize: 24,
-    paddingTop: 10,
-    paddingRight: 20,
-    paddingLeft: 20,
     color: '#173e43'
   },
   dateText: {
@@ -166,9 +250,6 @@ const styles = StyleSheet.create ({
     alignSelf: 'stretch',
     backgroundColor: 'yellow'
   },
-  buttonText: {
-    color: '#fae596'
-  },
   stats: {
     flex: 2,
     justifyContent: 'center',
@@ -179,15 +260,6 @@ const styles = StyleSheet.create ({
     paddingLeft: 30,
     alignSelf: 'stretch'
   },
-  listenEintraege: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    flex: 1,
-    fontSize: 24,
-    paddingTop: 30,
-    color: '#173e43'
-  }
 })
 
 module.exports = Start;

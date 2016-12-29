@@ -4,40 +4,106 @@
  * @flow
  */
 
- import React, { Component } from 'react';
- import {
-   AppRegistry,
-   StyleSheet,
-   Text,
-   View,
-   Navigator,
-   TouchableHighlight,
-   Image,
-   ScrollView,
-   TextInput
- } from 'react-native';﻿
+import React, { Component } from 'react';
+import {
+  AppRegistry,
+  AsyncStorage,
+  DatePickerAndroid,
+  Navigator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableHighlight,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';﻿
 
-//import { MaskedInput } from 'react-native-masked-input';
-//import { MaskedInput from } './MaskedInput';
-//module.exports = require('./lib/MaskedInput.js');
-//import {MaskedInput} from 'react-native-masked-input'
-var MaskedInput = require('./MaskedInput')
+import Realm from 'realm';
+import { RadioButtons } from 'react-native-radio-buttons'
+import ItemAusgabe from './ItemAusgabe'
+
+// import MaskedInput from 'react-native-masked-input';
+//<View style={styles.inputBetrag}>
+//  <MaskedInput maskType="money" currencySymbol="€" currencySeparator="," />
+//</View>
+
+// https://github.com/ArnaudRinquin/react-native-radio-buttons
 
 class Add extends Component {
   constructor(props) {
-  super(props);
-  this.state = { betrag: '0.00' };
-}
+    super(props);
+    this.state = {
+      betrag: '0.00',
+      note: '',
+      category: "",
+      presetDate: new Date(),
+      presetText: 'Heute',
+      date: "",
+      year: "",
+      month: "",
+      day: "",
+      options: [
+        "Miete",
+        "Auto & Verkehr",
+        "Lebensmittel",
+        "Freizeit",
+        "Gesundheit & Pflege",
+        "IT & Kommunikation",
+        "Klammoten & Schuhe",
+        "Studium und Bildung",
+        "Andere"
+      ]
+    };
+  }
 
-  updateText = (text) => {
-    this.setState((state) => {
-      return {
-        betrag: text
-      };
-    });
+
+  setCategory(value){
+    console.log("saveCategory --> " + value)
+    this.setState({"category": value});
   };
 
+  saveData(value){
+    console.log("Saving --> " + value)
+    this.setState({"betrag": value});
+  };
+
+
+  setDate(){
+    console.log("set date")
+    // get date values
+    var date = new Date();
+    this.setState({"date": date});
+    var year = Number(date.getFullYear())
+    this.setState({"year": year});
+    var month = Number(('0'+(date.getMonth()+1)).slice(-2))
+    this.setState({"month": month});
+    var day = Number(('0' + date.getDate()).slice(-2))
+    this.setState({"day": day});
+  }
+
+  saveNote(value){
+    console.log("Saving --> " + value)
+    this.setState({"note": value});
+  };
+
+
+
   onButtonSavePress(){
+    // store data
+    var amount = parseFloat(this.state.betrag)
+
+    console.log("save item")
+    let realm = new Realm({schema: [ItemAusgabe]});
+    // only save if user entered amount
+    if(amount > 0){
+      realm.write(() => {
+          realm.create('ItemAusgabe', { amount: amount, category: this.state.selectedOption, date: this.state.date, year: this.state.year, month: this.state.month, day: this.state.day, note: this.state.note });
+      })
+    }
+
+    // switch to start view
     this.props.navigator.push({
       id: 'Start'
     });
@@ -50,7 +116,66 @@ class Add extends Component {
   }
 
 
+
+  showPicker = async (stateKey, options) => {
+    try {
+      var newState = {};
+      const {action, year, month, day} = await DatePickerAndroid.open(options);
+      if (action === DatePickerAndroid.dismissedAction) {
+        newState[stateKey + 'Text'] = 'dismissed';
+      } else {
+        var date = new Date(year, month, day);
+        newState[stateKey + 'Text'] = date.toLocaleDateString();
+        newState[stateKey + 'Date'] = date;
+
+        this.setState({"date": date});
+        var year = Number(date.getFullYear())
+        this.setState({"year": year});
+        var month = Number(('0'+(date.getMonth()+1)).slice(-2))
+        this.setState({"month": month});
+        var day = Number(('0' + date.getDate()).slice(-2))
+        this.setState({"day": day});
+
+      }
+      this.setState(newState);
+    } catch ({code, message}) {
+      console.warn(`Error in example '${stateKey}': `, message);
+    }
+  };
+
+
+  setSelectedOption(selectedOption){
+    this.setState({
+      selectedOption
+    });
+  }
+
+  renderOption(option, selected, onSelect, index){
+    const style = selected ? { fontWeight: 'bold', fontSize: 24, 'margin': 5} : {fontSize: 18, 'margin': 5};
+
+    return (
+      <TouchableWithoutFeedback onPress={onSelect} key={index}>
+        <View>
+          <Text style={style}>{option}</Text>
+        </View>
+      </TouchableWithoutFeedback>
+    );
+  }
+
+  renderContainer(optionNodes){
+    return <View>{optionNodes}</View>;
+  }
+
+
+  componentWillMount(){
+    console.log("------componentWillMount------")
+    this.setDate();
+  };
+
+
+
   render(){
+
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -78,20 +203,51 @@ class Add extends Component {
         </View>
         <View style={styles.content}>
           <ScrollView>
-            <View style={styles.inputBetrag}>
-              <MaskedInput maskType="money" currencySymbol="€" currencySeparator="," />
-            </View>
-            <View style={styles.liste}>
-                <Text style={styles.listenEintraege}>Andere</Text>
-                <Text style={styles.listenEintraege}>Auto</Text>
-                <Text style={styles.listenEintraege}>Essen</Text>
-                <Text style={styles.listenEintraege}>Trinken</Text>
-                <Text style={styles.listenEintraege}>Miete</Text>
-                <Text style={styles.listenEintraege}>Freizeit</Text>
-                <Text style={styles.listenEintraege}>Urlaub</Text>
-            </View>
-          </ScrollView>
 
+          <View style={styles.stats}>
+            <TextInput style={styles.inputBetrag}
+              placeholder="  0,00 €"
+              keyboardType="numeric"
+              maxLength={6}
+              onChangeText={(text) => this.saveData(text)}
+              value={this.state.betrag}
+            />
+          </View>
+
+              <View style={styles.liste}>
+                <RadioButtons
+                  options={ this.state.options }
+                  onSelection={ this.setSelectedOption.bind(this) }
+                  selectedOption={this.state.selectedOption }
+                  renderOption={ this.renderOption }
+                  renderContainer={ this.renderContainer }
+                />
+              </View>
+
+              <View style={styles.moreInfo}>
+                  <Text style={styles.NotizText}>
+                      Notiz
+                  </Text>
+                  <TextInput style={styles.inputNotiz}
+                    placeholder=" Notiz"
+                    keyboardType="default"
+                    onChangeText={(text) => this.saveNote(text)}
+                    value={this.state.note}
+                  />
+              </View>
+
+              <View style={styles.moreInfo}>
+                  <Text style={styles.NotizText}>
+                      Datum
+                  </Text>
+                  <TouchableWithoutFeedback
+                    onPress={this.showPicker.bind(this, 'preset', {date: this.state.presetDate})}>
+                    <View>
+                        <Text style={styles.DatumText}>{this.state.presetText}</Text>
+                    </View>
+                  </TouchableWithoutFeedback>
+              </View>
+          </ScrollView>
         </View>
       </View>
     )
@@ -117,7 +273,12 @@ const styles = StyleSheet.create ({
   content: {
     flex: 7,
     backgroundColor: '#f8f8ff',
-    alignSelf: 'stretch'
+    alignSelf: 'stretch',
+  },
+  stats: {
+    flex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerText: {
     flex: 3,
@@ -145,37 +306,50 @@ const styles = StyleSheet.create ({
     alignSelf: 'stretch',
     backgroundColor: 'yellow'
   },
-  buttonText: {
-    color: '#fae596'
-  },
   inputBetrag: {
     flex: 2,
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: 30,
-    paddingBottom: 20
-  },
-  inputTextBetrag: {
+    paddingBottom: 20,
     fontSize: 28,
-    height: 60,
     width: 120,
-    borderColor: 'gray',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 0
+    height: 90,
   },
   liste: {
     flex: 7,
+    paddingTop: 10,
     paddingLeft: 30,
+    paddingRight: 30,
     alignSelf: 'stretch'
   },
-  listenEintraege: {
-    alignSelf: 'stretch',
+  moreInfo: {
+    flex: 4,
+    flexDirection: 'row'
+  },
+  NotizText: {
     flex: 1,
-    fontSize: 18,
-    paddingTop: 20,
-    color: '#173e43'
-  }
+    fontSize: 24,
+    marginTop: 50,
+    marginLeft: 30,
+    marginRight: 10,
+    color: '#173e43',
+  },
+  DatumText: {
+    flex: 1,
+    fontSize: 24,
+    marginTop: 50,
+    marginLeft: 30,
+    marginRight: 160,
+    color: '#173e43',
+  },
+  inputNotiz: {
+    flex: 3,
+    fontSize: 20,
+    marginTop: 20,
+    marginLeft: 10,
+    marginRight: 10,
+  },
 })
 
 module.exports = Add;

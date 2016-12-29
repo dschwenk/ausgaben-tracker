@@ -9,7 +9,10 @@
   "dependencies": {
     "react": "15.3.2",
     "react-native": "0.37.0",
+    "react-native-dropdown": "0.0.6",
     "react-native-masked-input": "^1.0.3",
+    "react-native-radio-buttons": "^0.13.0",
+    "realm": "^0.14.3",
     "whatwg-fetch": "^2.0.0"
   },
   "jest": {

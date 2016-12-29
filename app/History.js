@@ -4,20 +4,74 @@
  * @flow
  */
 
- import React, { Component } from 'react';
- import {
-   AppRegistry,
-   StyleSheet,
-   Text,
-   View,
-   Navigator,
-   TouchableHighlight,
-   Image
- } from 'react-native';﻿
+import React, { Component } from 'react';
+import {
+  AppRegistry,
+  Image,
+  ListView,
+  Navigator,
+  StyleSheet,
+  Text,
+  TouchableHighlight,
+  View,
+} from 'react-native';﻿
+
+import Realm from 'realm';
+import ItemAusgabe from './ItemAusgabe'
+import Row from './HistoryRow';
 
 
 
 class History extends Component {
+  constructor(){
+    super()
+
+    const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+
+    this.state = {
+      keyx: "",
+      dataSource: ds.cloneWithRows([]),
+    }
+  }
+
+  componentWillMount(){
+    this.setState({"isLoading" : true});
+    console.log("------componentWillMount------")
+
+    var newDs = [];
+    // query all ausgaben items for the current month
+    let realm = new Realm({schema: [ItemAusgabe]});
+    let r = realm.objects('ItemAusgabe').sorted("date", true);
+    // build output string depending on results
+    var rlength = r.length
+    // no results
+    if (rlength == 0) {
+        console.log("no entries")
+    } // there are results
+    else {
+      var amount = 0.00
+      for (var i = 0; i < rlength; i++) {
+          amount = amount + r[i].amount
+          console.log("amount: " + r[i].amount)
+          var amount_string = r[i].amount.toFixed(2)
+          // newDs.push("hallo" + r[i].amount);
+          var newData = {note:r[i].note, category:r[i].category, amount:amount_string, day:r[i].day, month:r[i].month, year:r[i].year};
+          newDs.push(newData)
+      }
+
+
+      this.setState({
+        dataSource: this.state.dataSource.cloneWithRows(newDs)
+      })
+
+      //this.state.myKey = parseFloat(amount).toFixed(2) + ' €'
+      console.log("sum ammount: " + amount)
+    }
+
+
+
+    this.setState({"isLoading" : false});
+  }
 
   onButtonStartPress(){
     this.props.navigator.push({
@@ -64,9 +118,14 @@ class History extends Component {
           </TouchableHighlight>
         </View>
         <View style={styles.content}>
-        <Text style={styles.smallText}>
-          Content History Text
-        </Text>
+            <ListView
+              style={styles.listcontainer}
+              dataSource={this.state.dataSource}
+              renderRow={(data) => <Row {...data} />}
+              renderSeparator={(sectionId, rowId) => <View key={rowId} style={styles.separator} />}
+              enableEmptySections={true}
+            />
+
         </View>
       </View>
     )
@@ -93,7 +152,7 @@ const styles = StyleSheet.create ({
     flex: 7,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f8ff',
+    backgroundColor: '#f5f5f0',
     alignSelf: 'stretch'
   },
   headerText: {
@@ -105,15 +164,7 @@ const styles = StyleSheet.create ({
   },
   headerButton: {
     flex: 1,
-    paddingLeft: 25    
-  },
-  largeText: {
-    flex: 1,
-    fontSize: 52,
-    paddingTop: 40,
-    paddingRight: 20,
-    paddingLeft: 20,
-    color: '#173e43'
+    paddingLeft: 25
   },
   button: {
     flex: 1,
@@ -122,9 +173,17 @@ const styles = StyleSheet.create ({
     alignSelf: 'stretch',
     backgroundColor: 'yellow'
   },
-  buttonText: {
-    color: '#fae596'
-  }
+  listcontainer: {
+    flex: 1,
+    marginTop: 20,
+    alignSelf: 'stretch',
+  },
+  separator: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#8E8E8E',
+    alignSelf: 'stretch',
+  },
 })
 
 module.exports = History;
