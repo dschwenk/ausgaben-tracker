@@ -21,15 +21,9 @@ import {
 } from 'react-native';﻿
 
 import Realm from 'realm';
-import { RadioButtons } from 'react-native-radio-buttons'
+import RadioButtons from 'react-native-radio-buttons'
 import ItemAusgabe from './ItemAusgabe'
 
-// import MaskedInput from 'react-native-masked-input';
-//<View style={styles.inputBetrag}>
-//  <MaskedInput maskType="money" currencySymbol="€" currencySeparator="," />
-//</View>
-
-// https://github.com/ArnaudRinquin/react-native-radio-buttons
 
 class Add extends Component {
   constructor(props) {
@@ -40,6 +34,7 @@ class Add extends Component {
       category: "",
       presetDate: new Date(),
       presetText: 'Heute',
+      selectedOption: 'Andere',
       date: "",
       year: "",
       month: "",
@@ -60,18 +55,18 @@ class Add extends Component {
 
 
   setCategory(value){
-    console.log("saveCategory --> " + value)
     this.setState({"category": value});
   };
 
   saveData(value){
-    console.log("Saving --> " + value)
     this.setState({"betrag": value});
   };
 
+  saveNote(value){
+    this.setState({"note": value});
+  };
 
   setDate(){
-    console.log("set date")
     // get date values
     var date = new Date();
     this.setState({"date": date});
@@ -83,18 +78,11 @@ class Add extends Component {
     this.setState({"day": day});
   }
 
-  saveNote(value){
-    console.log("Saving --> " + value)
-    this.setState({"note": value});
-  };
-
-
 
   onButtonSavePress(){
     // store data
     var amount = parseFloat(this.state.betrag)
 
-    console.log("save item")
     let realm = new Realm({schema: [ItemAusgabe]});
     // only save if user entered amount
     if(amount > 0){
@@ -112,6 +100,12 @@ class Add extends Component {
   onButtonCancelPress(){
     this.props.navigator.push({
       id: 'Start'
+    });
+  }
+
+  onButtonSettingsPress(){
+    this.props.navigator.push({
+      id: 'Settings'
     });
   }
 
@@ -166,16 +160,13 @@ class Add extends Component {
     return <View>{optionNodes}</View>;
   }
 
-
   componentWillMount(){
-    console.log("------componentWillMount------")
     this.setDate();
   };
 
 
 
   render(){
-
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -194,7 +185,7 @@ class Add extends Component {
               source={require('./save.png')}
             />
           </TouchableHighlight>
-          <TouchableHighlight onPress={this.onButtonSavePress.bind(this)} style={styles.headerButton}>
+          <TouchableHighlight onPress={this.onButtonSettingsPress.bind(this)} style={styles.headerButton}>
             <Image
               style={styles.homeButton}
               source={require('./settings.png')}

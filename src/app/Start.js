@@ -40,8 +40,6 @@ class Start extends Component {
 
   componentWillMount(){
     this.setState({"isLoading" : true});
-    console.log("------componentWillMount------")
-
 
     // get cuurent year and month
     var date = new Date();
@@ -49,8 +47,6 @@ class Start extends Component {
     var month = Number(('0'+(date.getMonth()+1)).slice(-2))
     var monthName = this.state.monthNames[month-1]
     this.setState({currentMonth: monthName})
-
-
 
     // query all ausgaben items for the current month
     let realm = new Realm({schema: [ItemAusgabe]});
@@ -70,14 +66,14 @@ class Start extends Component {
           // verify if current category was seen before
           var isin = false;
           for (var j = 0; j < newDs.length; j++) {
-            if(r[i].category == newDs[j].category){
+            if (r[i].category == newDs[j].category) {
               newDs[j].amount = newDs[j].amount + r[i].amount
               isin = true;
               break;
             }
           }
           // there are no objects in array or category is not in arry
-          if (isin == false || newDs.length == 0){
+          if (isin == false || newDs.length == 0) {
             var newData = {category:r[i].category, amount:r[i].amount, amount_string: ''};
             newDs.push(newData)
           }
@@ -92,7 +88,7 @@ class Start extends Component {
         newDs[j].amount_string = newDs[j].amount.toFixed(2) + ' €'
       }
 
-    if(newDs.length > 0){
+    if (newDs.length > 0) {
       // sort array with objects depending on category amount
       newDs.sort(function(a, b) {
         // absteigend sortieren
@@ -107,13 +103,6 @@ class Start extends Component {
 
     this.setState({"isLoading" : false});
   }
-
-
-  componentDidMount(){
-    console.log("------componentDidMount------")
-  };
-
-
 
   onButtonAddPress(){
     this.props.navigator.push({

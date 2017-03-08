@@ -30,13 +30,13 @@ class History extends Component {
 
     this.state = {
       keyx: "",
+      noEntries: false,
       dataSource: ds.cloneWithRows([]),
     }
   }
 
   componentWillMount(){
     this.setState({"isLoading" : true});
-    console.log("------componentWillMount------")
 
     var newDs = [];
     // query all ausgaben items for the current month
@@ -47,6 +47,7 @@ class History extends Component {
     // no results
     if (rlength == 0) {
         console.log("no entries")
+        this.setState({noEntries: true})
     } // there are results
     else {
       var amount = 0.00
@@ -59,17 +60,10 @@ class History extends Component {
           newDs.push(newData)
       }
 
-
       this.setState({
         dataSource: this.state.dataSource.cloneWithRows(newDs)
       })
-
-      //this.state.myKey = parseFloat(amount).toFixed(2) + ' €'
-      console.log("sum ammount: " + amount)
     }
-
-
-
     this.setState({"isLoading" : false});
   }
 
@@ -91,44 +85,63 @@ class History extends Component {
     });
   }
 
-  render(){
+  returnHeader(){
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>
-            Verlauf
-          </Text>
-          <TouchableHighlight onPress={this.onButtonStartPress.bind(this)} style={styles.headerButton}>
-            <Image
-              style={styles.homeButton}
-              source={require('./home.png')}
-            />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={this.onButtonAddPress.bind(this)} style={styles.headerButton}>
-            <Image
-              style={styles.homeButton}
-              source={require('./add.png')}
-            />
-          </TouchableHighlight>
-          <TouchableHighlight onPress={this.onButtonSettingsPress.bind(this)} style={styles.headerButton}>
-            <Image
-              style={styles.homeButton}
-              source={require('./settings.png')}
-            />
-          </TouchableHighlight>
-        </View>
-        <View style={styles.content}>
-            <ListView
-              style={styles.listcontainer}
-              dataSource={this.state.dataSource}
-              renderRow={(data) => <Row {...data} />}
-              renderSeparator={(sectionId, rowId) => <View key={rowId} style={styles.separator} />}
-              enableEmptySections={true}
-            />
-
-        </View>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>
+          Verlauf
+        </Text>
+        <TouchableHighlight onPress={this.onButtonStartPress.bind(this)} style={styles.headerButton}>
+          <Image
+            style={styles.homeButton}
+            source={require('./home.png')}
+          />
+        </TouchableHighlight>
+        <TouchableHighlight onPress={this.onButtonAddPress.bind(this)} style={styles.headerButton}>
+          <Image
+            style={styles.homeButton}
+            source={require('./add.png')}
+          />
+        </TouchableHighlight>
+        <TouchableHighlight onPress={this.onButtonSettingsPress.bind(this)} style={styles.headerButton}>
+          <Image
+            style={styles.homeButton}
+            source={require('./settings.png')}
+          />
+        </TouchableHighlight>
       </View>
     )
+  }
+
+  render(){
+    if (this.state.noEntries == true){
+      return (
+        <View style={styles.container}>
+          {this.returnHeader()}
+          <View style={styles.content}>
+              <Text style={styles.textStyle}>
+                keine Ausgaben :)
+              </Text>
+          </View>
+        </View>
+      )
+    }
+    else {
+      return (
+        <View style={styles.container}>
+          {this.returnHeader()}
+          <View style={styles.content}>
+              <ListView
+                style={styles.listcontainer}
+                dataSource={this.state.dataSource}
+                renderRow={(data) => <Row {...data} />}
+                renderSeparator={(sectionId, rowId) => <View key={rowId} style={styles.separator} />}
+                enableEmptySections={true}
+              />
+          </View>
+        </View>
+      )
+    }
   }
 }
 
@@ -152,7 +165,7 @@ const styles = StyleSheet.create ({
     flex: 7,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f0',
+    backgroundColor: '#f8f8ff',
     alignSelf: 'stretch'
   },
   headerText: {
@@ -175,7 +188,6 @@ const styles = StyleSheet.create ({
   },
   listcontainer: {
     flex: 1,
-    marginTop: 20,
     alignSelf: 'stretch',
   },
   separator: {
@@ -184,6 +196,10 @@ const styles = StyleSheet.create ({
     backgroundColor: '#8E8E8E',
     alignSelf: 'stretch',
   },
+  textStyle: {
+    fontSize: 22,
+    color: 'black',
+  }
 })
 
 module.exports = History;

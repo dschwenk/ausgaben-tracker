@@ -1,7 +1,7 @@
 /**
  * Sample React Native App
  * https://github.com/facebook/react-native
- * @flow
+ * @f
  */
 
  import React, { Component } from 'react';
@@ -21,10 +21,9 @@
  } from 'react-native';﻿
 
 // https://github.com/anarchicknight/react-native-communications
+// Open a web address or call, email, text or iMessage (iOS only) someone in React Native
+// used to allow user to send feedback mail to developer
 import Communications from 'react-native-communications';
-
-// https://github.com/zo0r/react-native-push-notification
-
 
 
 class Settings extends Component {
@@ -43,7 +42,6 @@ class Settings extends Component {
     this.setState({modalVisible: visible});
   }
 
-
   onButtonHomePress(){
     this.props.navigator.push({
       id: 'Start'
@@ -51,30 +49,22 @@ class Settings extends Component {
   }
 
   pressendWaehrung(){
-    console.log("pressed Währung")
     this.setModalVisible(true)
   }
 
-  pressedButtonUeber(){
-    console.log("ueber")
-  }
-
   pressedButtonEuro(){
-    console.log("pressed pressedButtonEuro")
     this.setState({waehrung: '€'});
     this.setModalVisible(!this.state.modalVisible);
     ToastAndroid.show('Währung: Euro €', ToastAndroid.LONG)
   }
 
   pressedButtonDollar(){
-    console.log("pressed pressedButtonDollar")
     this.setState({waehrung: '$'});
     this.setModalVisible(!this.state.modalVisible);
     ToastAndroid.show('Währung: Dollar $', ToastAndroid.LONG)
   }
 
   pressedButtonCHF(){
-    console.log("pressed pressedButtonCHF")
     this.setState({waehrung: 'CHF'});
     this.setModalVisible(!this.state.modalVisible)
     ToastAndroid.show('Währung: Schweizer Franken CHF', ToastAndroid.LONG)
@@ -95,8 +85,6 @@ class Settings extends Component {
             />
           </TouchableHighlight>
         </View>
-
-        <ScrollView>
           <View style={styles.content}>
             <View>
               <Text style={styles.ueberschriftText}>
@@ -219,10 +207,7 @@ class Settings extends Component {
                 </Text>
               </TouchableHighlight>
             </View>
-
-
           </View>
-        </ScrollView>
       </View>
     )
   }
